@@ -2,7 +2,7 @@
 
 <article class="mb-8 bg-white shadow-lg rounded-lg overflow-hidden">
     @if ($post->image)
-        <img class="w-full h-72 object-cover object-center" src="{{Storage::url($post->image->url)}}" alt="{{$post->name}}">
+        <img class="w-full h-72 object-cover object-center" src="{{$post->image->url}}" alt="{{$post->name}}">
     @else
         <img class="w-full h-72 object-cover object-center" src="https://cdn.pixabay.com/photo/2021/01/05/07/02/torii-5889982_960_720.jpg">
     @endif

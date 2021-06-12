@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Post;
 use App\Models\Category;
 use App\Models\Tag;
@@ -11,15 +10,17 @@ use App\Models\Tag;
 use Illuminate\Support\Facades\Storage;
 
 use App\Http\Requests\PostRequest;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+use Illuminate\Support\Facades\Cache;
 
 class PostController extends Controller
 {
 
     public function __construct()
-    {   
+    {
         $this->middleware('can:admin.posts.index')->only('index');
-        $this->middleware('can:admin.posts.create')->only('create','store');
-        $this->middleware('can:admin.posts.edit')->only('edit','update');
+        $this->middleware('can:admin.posts.create')->only('create', 'store');
+        $this->middleware('can:admin.posts.edit')->only('edit', 'update');
         $this->middleware('can:admin.posts.destroy')->only('destroy');
     }
 
@@ -31,79 +32,104 @@ class PostController extends Controller
 
     public function create()
     {
-        $categories = Category::pluck('name','id');
+        $categories = Category::pluck('name', 'id');
         $tags = Tag::all();
 
-        return view('admin.posts.create',compact('categories','tags'));
+        return view('admin.posts.create', compact('categories', 'tags'));
     }
 
     public function store(PostRequest $request)
     {
         $post = Post::create($request->all());
 
-        if($request->file('fules')){
-            $url = Storage::put('posts', $request->file('fules'));
-            
+        if ($request->file('file')) {
+
+            // CLOUDINARY
+            $uploadedFileUrl = Cloudinary::upload(
+                $request->file('file')->getRealPath(),
+                ['folder' => 'LaravelBlog']
+            );
+
             $post->image()->create([
-                'url' => $url
+                'url' => $uploadedFileUrl->getSecurePath(),
+                'publicId' => $uploadedFileUrl->getPublicId()
             ]);
         }
 
-        if($request->tags){
+
+        if ($request->tags) {
             $post->tags()->attach($request->tags);
         }
 
-        return redirect()->route('admin.posts.edit',$post);
+        Cache::flush();
+
+        return redirect()->route('admin.posts.edit', $post);
     }
 
     public function edit(Post $post)
     {
 
-        $this->authorize('author',$post);
+        $this->authorize('author', $post);
 
-        $categories = Category::pluck('name','id');
+        $categories = Category::pluck('name', 'id');
         $tags = Tag::all();
 
-        return view('admin.posts.edit', compact('post','categories','tags'));
+        return view('admin.posts.edit', compact('post', 'categories', 'tags'));
     }
 
     public function update(PostRequest $request, Post $post)
     {
 
-        $this->authorize('author',$post);
+        $this->authorize('author', $post);
 
         $post->update($request->all());
 
-        if($request->file('file')){
-            $url = Storage::put('posts',$request->file('file'));
+        if ($request->file('file')) {
+            // CLOUDINARY UPLOAD
+            $uploadedFileUrl = Cloudinary::upload(
+                $request->file('file')->getRealPath(),
+                ['folder' => 'LaravelBlog']
+            );
 
-            if($post->image){
-                Storage::delete($post->image->url);
+            if ($post->image) {
+                // CLOUDINARY DELETE
+                $deleteImage = Cloudinary::destroy(
+                    $post->image->publicId
+                );
 
                 $post->image->update([
-                    'url' => $url
+                    'url' => $uploadedFileUrl->getSecurePath(),
+                    'publicId' => $uploadedFileUrl->getPublicId()
                 ]);
-            }else{
+            } else {
                 $post->image()->create([
-                    'url' => $url
+                    'url' => $uploadedFileUrl->getSecurePath(),
+                    'publicId' => $uploadedFileUrl->getPublicId()
                 ]);
             }
         }
 
-        if($request->tags){
-            $post->tags()->sync($request->tags) ; 
+        if ($request->tags) {
+            $post->tags()->sync($request->tags);
         }
+
+        Cache::flush();
 
         return redirect()->route('admin.posts.edit', $post)->with('info', 'El post se actualizo con exito');
     }
 
     public function destroy(Post $post)
     {
-        $this->authorize('author',$post);
+        $this->authorize('author', $post);
 
         $post->delete();
-        
-        return redirect()->route('admin.posts.index', $post)->with('info', 'El post se elimino con exito');
 
+        $deleteImage = Cloudinary::destroy(
+            $post->image->publicId
+        );
+
+        Cache::flush();
+
+        return redirect()->route('admin.posts.index', $post)->with('info', 'El post se elimino con exito');
     }
 }

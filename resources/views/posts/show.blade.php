@@ -11,7 +11,7 @@
             <div class="lg:col-span-2">
                 <figure>
                     @if ($post->image)
-                        <img class="w-full h-80 object-cover object-center" src="{{Storage::url($post->image->url)}}" alt="{{$post->name}}">
+                        <img class="w-full h-80 object-cover object-center" src="{{$post->image->url}}" alt="{{$post->name}}">
                     @else
                         <img class="w-full h-80 object-cover object-center" src="https://cdn.pixabay.com/photo/2021/01/05/07/02/torii-5889982_960_720.jpg">
                     @endif
@@ -29,7 +29,7 @@
                         <li class="mb-4">
                             <a class="flex" href="{{route('posts.show',$similar)}}">
                                 @if ($similar->image)
-                                    <img class="w-36 h-20 object-cover object-center" src="{{Storage::url($similar->image->url)}}" alt="">
+                                    <img class="w-36 h-20 object-cover object-center" src="{{$similar->image->url}}" alt="">
                                 @else
                                     <img class="w-36 h-20 object-cover object-center" src="https://cdn.pixabay.com/photo/2021/01/05/07/02/torii-5889982_960_720.jpg" alt="">
                                 @endif

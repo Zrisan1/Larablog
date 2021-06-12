@@ -64,7 +64,7 @@
                     <div class="col">
                         <div class="image-wrapper">
                             @isset ($post->image)
-                                <img id="picture" src="{{ Storage::url($post->image->url) }}" alt="image">
+                                <img id="picture" src="{{ $post->image->url }}" alt="image">
                             @else 
                                 <img id="picture" src="https://cdn.pixabay.com/photo/2021/01/05/07/02/torii-5889982_960_720.jpg" alt="image-default">
                             @endisset
